@@ -7,5 +7,3 @@ pip install groq
 pip install langchain-groq
 
 pip install langchain
-
-pip install groq

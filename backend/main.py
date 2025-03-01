@@ -92,6 +92,38 @@ class SignupRequest(BaseModel):
     username: str
     password: str
 
+
+@app.post("/submit-api")
+async def submit_api(request: Request, username: Optional[str] = None, api_details: str = Form(...)):
+    if username:
+        # Reference to Firestore user document
+        user_ref = db.collection("user").document(username.lower())
+
+        # Update the canvas_key field
+        try:
+            await asyncio.to_thread(user_ref.update, {"canvas_key": api_details})
+            return {"message": "API details updated successfully!", "username": username, "canvas_key": api_details}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error updating API details: {str(e)}")
+    else:
+        return {"message": "Username is missing from the request."}
+
+@app.post("/submit-canvas-infra")
+async def submit_canvas_infra(request: Request, username: Optional[str] = None, canvas_infra_details: str = Form(...)):
+    if username:
+        # Reference to Firestore user document
+        user_ref = db.collection("user").document(username.lower())
+
+        # Update the canvas_infra field
+        try:
+            await asyncio.to_thread(user_ref.update, {"infrastructure": canvas_infra_details})
+            return {"message": "Canvas Infrastructure details updated successfully!", "username": username, "canvas_infra": canvas_infra_details}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error updating infrastructure details: {str(e)}")
+    else:
+        return {"message": "Username is missing from the request."}
+    
+    
 @app.post("/creation")
 async def signup(request: SignupRequest):
     print("Signup started and locked and loaded")

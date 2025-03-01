@@ -35,7 +35,7 @@
             <button onclick="window.location.href='mailto:gmail.com'" class="bg-blue-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-blue-600">
                 Send to Gmail
             </button>
-            <button onclick="window.location.href='video.html'" class="bg-green-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-green-600">
+            <button onclick="connectToCanvas()" class="bg-green-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-green-600">
                 Connect to Canvas
             </button>
         </div>
@@ -76,7 +76,25 @@
     <!-- FullCalendar JS -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@5.10.1/main.global.min.js"></script>
-
+    <script>
+        function connectToCanvas() {
+            // Get the current URL
+            const currentUrl = window.location.href;
+            
+            // Extract the query string (if it exists)
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryString = urlParams.toString();  // Get query string as 'key=value'
+    
+            // If there's a query string, append it to the video.html URL
+            let videoUrl = "video.html";
+            if (queryString) {
+                videoUrl += "?" + queryString;
+            }
+    
+            // Redirect to video.html with the query string (if exists)
+            window.location.href = videoUrl;
+        }
+    </script>
     <script>
         // Google API client setup
                 console.log("Google API Initialized");

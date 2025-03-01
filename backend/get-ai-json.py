@@ -49,7 +49,7 @@ parser = JsonOutputParser(pydantic_object={
                     "className": {"type": "string"},
                     "assignmentName": {"type": "string"},
                     "priority": {"type": "int"},
-                    "canvasSpecific": {"type": "bool"}
+                    "aiGenerated": {"type": "bool"}
                 }}
             }}
         }
@@ -88,18 +88,17 @@ prompt_template = ChatPromptTemplate.from_messages([
                 }},
                 "colorId": color id here (ensure that the classes are color coded),
                 "recurrence": [
-                    "RRULE:FREQ=DAILY;COUNT=5"  # Repeat daily for 5 occurrences
+                    "RRULE:FREQ=DAILY;COUNT=5"  # Repeat daily for 5 occurrences (only include if recurrences are mentioned)
                 ],
                 "extendedProperties": {{
                     "private": {{
                         "className": "course code here (N/A when this is not for a canvas assignment)",
                         "assignmentName": "assignment name here (N/A when this is not for a canvas assignment)",
                         "priortiy": "an int between 1 and 10, 10 being high priority (something like a final would be a 10) (extra credit assignments would be a 1)",
-                        "canvasSpecific": "true if we are using this time to finish a canvas assignment"
+                        "aiGenerated": "always set this to true"
                     }}
                 }}
             }},
-            # Add more events here...
         ]
     """),
     ("user", "{input}")
@@ -109,12 +108,7 @@ prompt_template = ChatPromptTemplate.from_messages([
 chain = prompt_template | llm | parser
 
 
-def schedule_event(user_input: str) -> dict:
+def schedule_events(user_input: str) -> dict:
     result = chain.invoke({"input": user_input})
     print(json.dumps(result, indent=2))
     return result
-
-
-# Example usage
-user_input = input('What would you like to schedule? ')
-schedule_event(user_input)

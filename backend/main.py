@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 import firebase_admin
 from firebase_admin import credentials, firestore
 import asyncio
+import datetime as datetime
 
 
 
@@ -86,6 +87,31 @@ import threading
 class CanvasRequest(BaseModel):
     api_key: str  # API Key for authentication
     canvas_url: str  # Base URL of the Canvas instance
+
+class SignupRequest(BaseModel):
+    username: str
+    password: str
+
+@app.post("/creation")
+async def signup(request: SignupRequest):
+    print("Signup started and locked and loaded")
+
+    username = request.username.lower()  # Ensure case insensitivity
+    password = request.password
+
+    # Reference to Firestore user document
+    user_ref = db.collection("user").document(username)
+    
+    # Create user without checking existence (overwrite if exists)
+    user_data = {
+        "password": password,
+        "canvas_key": None,
+        "gmail": None,
+        "infrastructure": None
+                }
+    await asyncio.to_thread(user_ref.set, user_data)
+
+    return {"message": "Signup successful. Redirecting to home.", "username": username}
 
 def get_courses(api_key, canvas_url):
     """Fetch all active courses."""

@@ -66,23 +66,18 @@
 
     <!-- API and Canvas Infra Section -->
     <section class="my-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-semibold text-center text-gray-900 mb-8">Submit Canvas token & Infrastructure Details</h2>
-        <div class="grid md:grid-cols-2 gap-8">
-          <!-- API Section -->
-          <div class="bg-white p-6 shadow-lg rounded-lg">
-            <h3 class="text-2xl font-semibold text-gray-900 mb-4">Canvas new access token</h3>
-            <textarea id="api_details" rows="6" class="w-full p-4 border border-gray-300 rounded-lg mb-4" placeholder="Enter your API details here..."></textarea>
-          </div>
-          <!-- Canvas Infra Section -->
-          <div class="bg-white p-6 shadow-lg rounded-lg">
-            <h3 class="text-2xl font-semibold text-gray-900 mb-4">Canvas Infrastructure Information</h3>
-            <textarea id="canvas_infra_details" rows="6" class="w-full p-4 border border-gray-300 rounded-lg mb-4" placeholder="Enter your Canvas infrastructure details here..."></textarea>
-          </div>
+        <h2 class="text-3xl font-semibold text-center text-gray-900 mb-8">Submit Canvas Details</h2>
+        <div class="bg-white p-6 shadow-lg rounded-lg">
+            <h3 class="text-2xl font-semibold text-gray-900 mb-4">Update Canvas Information</h3>
+            <form id="canvas-form">
+                <textarea id="canvas-key" name="canvas_key" rows="4" class="w-full p-4 border border-gray-300 rounded-lg mb-4" placeholder="Enter your Canvas API Key" required></textarea>
+                <textarea id="infrastructure" name="infrastructure" rows="4" class="w-full p-4 border border-gray-300 rounded-lg mb-4" placeholder="Enter your Canvas infrastructure details" required></textarea>
+                <button type="submit" class="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-300">
+                    Submit Canvas Details
+                </button>
+            </form>
         </div>
-        <button id="submit-btn" class="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-300 mt-8">
-            Submit Canvas Details
-        </button>
-      </section>
+    </section>
   </main>
 
   <!-- Footer -->
@@ -98,44 +93,48 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
 
   <script>
-    document.getElementById('submit-btn').addEventListener('click', function() {
-      const apiDetails = document.getElementById('api_details').value;
-      const canvasInfraDetails = document.getElementById('canvas_infra_details').value;
-  
-      if (!apiDetails || !canvasInfraDetails) {
-        alert("Please fill in both fields.");
-        return;
-      }
-  
-      // Submit both data together using a POST request
-      fetch('/submit-api', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ api_details: apiDetails })
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        return fetch('/submit-canvas-infra', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ canvas_infra_details: canvasInfraDetails })
+    document.getElementById("canvas-form").addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        // Collect values from the form inputs
+        const canvasKey = document.getElementById("canvas-key").value;
+        const infrastructure = document.getElementById("infrastructure").value;
+
+        // Get username from the query string (e.g., ?username=mlmecham)
+        const username = new URLSearchParams(window.location.search).get("username");
+
+        // Check if username exists in the query string
+        if (!username) {
+            console.error('Username is required');
+            return; // Stop if username is missing
+        }
+
+        // Prepare the data object
+        const data = {
+            canvas_key: canvasKey,
+            infrastructure: infrastructure,
+            username: username
+        };
+
+        // Make the POST request to the FastAPI server
+        const response = await fetch('http://127.0.0.1:8000/update-canvas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
         });
-      })
-      .then(response => response.json())
-      .then(data => {
-        alert("Canvas details submitted successfully!");
-        console.log(data);
-      })
-      .catch(error => {
-        alert("There was an error submitting the details.");
-        console.error(error);
-      });
+
+        // Handle the response
+        if (response.ok) {
+            const responseData = await response.json();
+            console.log(responseData); // Handle the success response (optional)
+            alert('Canvas details updated successfully');
+        } else {
+            console.error('Error:', response.statusText); // Log the error
+            alert('Failed to update canvas details');
+        }
     });
-  </script>
+</script>
 </body>
 </html>

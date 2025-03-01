@@ -35,20 +35,12 @@
             <button onclick="window.location.href='mailto:gmail.com'" class="bg-blue-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-blue-600">
                 Send to Gmail
             </button>
-            <button onclick="connectToCanvas()" class="bg-green-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-green-600">
+            <button onclick="connectToCanvas()" class="bg-green-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-green-600 mb-4">
                 Connect to Canvas
             </button>
         </div>
     
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold">Enter Task</h2>
-            <form id="task-form" class="space-y-4">
-                <input id="task-title" type="text" placeholder="Task Title" class="w-full p-2 border border-gray-300 rounded">
-                <textarea id="task-description" placeholder="Task Description" class="w-full p-2 border border-gray-300 rounded"></textarea>
-                <input id="task-date" type="datetime-local" class="w-full p-2 border border-gray-300 rounded">
-                <button type="submit" class="w-full p-2 bg-blue-500 text-white rounded">Add Task</button>
-            </form>
-        </div>
+        
     
         <div id="calendar"></div>
     </div>
@@ -67,34 +59,37 @@
         <!-- Calendar Display -->
         <div id="calendar"></div>
     </div>
+
+    
     <footer class="bg-gray-800 text-white py-6">
         <div class="max-w-7xl mx-auto text-center">
           <p>&copy; 2025 Schedulo. All rights reserved.</p>
         </div>
+
       </footer>
 
     <!-- FullCalendar JS -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@5.10.1/main.global.min.js"></script>
-    <script>
-        function connectToCanvas() {
-            // Get the current URL
-            const currentUrl = window.location.href;
-            
-            // Extract the query string (if it exists)
-            const urlParams = new URLSearchParams(window.location.search);
-            const queryString = urlParams.toString();  // Get query string as 'key=value'
-    
-            // If there's a query string, append it to the video.html URL
-            let videoUrl = "video.html";
-            if (queryString) {
-                videoUrl += "?" + queryString;
-            }
-    
-            // Redirect to video.html with the query string (if exists)
-            window.location.href = videoUrl;
+      <script>
+    function connectToCanvas() {
+        // Get the current URL
+        const currentUrl = window.location.href;
+        
+        // Extract the query string (if it exists)
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryString = urlParams.toString();  // Get query string as 'key=value'
+
+        // If there's a query string, append it to the video.html URL
+        let videoUrl = "video.html";
+        if (queryString) {
+            videoUrl += "?" + queryString;
         }
-    </script>
+
+        // Redirect to video.html with the query string (if exists)
+        window.location.href = videoUrl;
+    }
+</script>
     <script>
         // Google API client setup
                 console.log("Google API Initialized");
@@ -151,75 +146,262 @@
             });
         }
 
+        const assignments = [
+        {
+            "name": "Daily Reading, Attendance, and Notes Report: February 27",
+            "due": "2025-03-03T06:59:59Z",
+            "points": 20.0,
+            "submitted": "No",
+            "score": "N/A"
+        },
+        {
+            "name": "Project Proposal Submission",
+            "due": "2025-03-07T23:59:59Z",
+            "points": 30.0,
+            "submitted": "Yes",
+            "score": "N/A"
+        },
+        {
+      "name": "Daily Reading, Attendance, and Notes Report: March 11",
+      "due": "2025-03-17T05:59:59Z",
+      "points": 20.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Daily Reading, Attendance, and Notes Report: March 13",
+      "due": "2025-03-17T05:59:59Z",
+      "points": 20.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Daily Attendance, and Notes Report: March 18",
+      "due": "2025-03-24T05:59:59Z",
+      "points": 15.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Daily Reading, Attendance, and Notes Report: March 25",
+      "due": "2025-03-31T05:59:59Z",
+      "points": 20.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Daily Attendance, and Notes Report: March 27",
+      "due": "2025-03-31T05:59:59Z",
+      "points": 15.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Daily Reading and Attendance Report: April 01",
+      "due": "2025-04-07T05:59:59Z",
+      "points": 20.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 4- Video 1",
+      "due": "2025-03-10T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 4- Video 2",
+      "due": "2025-03-10T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 4- Video 3",
+      "due": "2025-03-10T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 5- Video 1",
+      "due": "2025-03-24T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 5- Video 2",
+      "due": "2025-03-24T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 5- Video 3",
+      "due": "2025-03-24T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 6- Video 1",
+      "due": "2025-04-09T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 6- Video 2",
+      "due": "2025-04-09T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Unit 6- Video 3",
+      "due": "2025-04-09T05:59:59Z",
+      "points": 10.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Report Quiz - Week 12",
+      "due": "2025-03-30T05:59:00Z",
+      "points": 25.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Report Quiz - Week 13",
+      "due": "2025-04-06T05:59:00Z",
+      "points": 25.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Report Quiz - Week 7",
+      "due": "2025-03-02T06:59:59Z",
+      "points": 25.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Report Quiz - Week 8",
+      "due": "2025-03-02T06:59:00Z",
+      "points": 25.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Report Quiz - Week 9",
+      "due": "2025-03-09T06:59:00Z",
+      "points": 25.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Report Quiz - Week 10",
+      "due": "2025-03-16T05:59:00Z",
+      "points": 25.0,
+      "submitted": "No",
+      "score": "N/A"
+    },
+    {
+      "name": "Report Quiz - Week 11",
+      "due": "2025-03-23T05:59:00Z",
+      "points": 25.0,
+      "submitted": "No",
+      "score": "N/A"
+    }
+
+    ]
+
         document.addEventListener('DOMContentLoaded', function() {
-            const calendarEl = document.getElementById('calendar');
-            const taskForm = document.getElementById('task-form');
-            const taskTitle = document.getElementById('task-title');
-            const taskDescription = document.getElementById('task-description');
-            const taskDate = document.getElementById('task-date');
+        const calendarEl = document.getElementById('calendar');
+        const taskForm = document.getElementById('task-form');
+        const taskTitle = document.getElementById('task-title');
+        const taskDescription = document.getElementById('task-description');
+        const taskDate = document.getElementById('task-date');
 
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                editable: true,
-                droppable: true,
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                drop: function(info) {
-                    const droppedEvent = {
-                        title: 'New Task',
-                        start: info.dateStr,
-                        color: '#3498db'
-                    };
-                    calendar.addEvent(droppedEvent);
-                    addEventToGoogleCalendar(droppedEvent);
-                    alert('New task added!');
-                },
-                eventClick: function(info) {
-                    const event = info.event;
-                    const deleteEvent = confirm(`Do you want to delete the event: ${event.title}?`);
-                    if (deleteEvent) {
-                        event.remove();
-                        alert('Event deleted!');
-                    }
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            editable: true,
+            droppable: true,
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            drop: function(info) {
+                const droppedEvent = {
+                    title: 'New Task',
+                    start: info.dateStr,
+                    color: '#3498db'
+                };
+                calendar.addEvent(droppedEvent);
+                addEventToGoogleCalendar(droppedEvent);
+                alert('New task added!');
+            },
+            eventClick: function(info) {
+                const event = info.event;
+                const deleteEvent = confirm(`Do you want to delete the event: ${event.title}?`);
+                if (deleteEvent) {
+                    event.remove();
+                    alert('Event deleted!');
                 }
-            });
-
-            calendar.render();
-
-            // Task form submission
-            taskForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                const title = taskTitle.value;
-                const description = taskDescription.value;
-                const date = taskDate.value;
-
-                if (title && date) {
-                    const newEvent = {
-                        title: title,
-                        start: date,
-                        description: description || '',
-                        color: '#FF5733',
-                    };
-
-                    calendar.addEvent(newEvent);
-                    addEventToGoogleCalendar(newEvent);
-
-                    taskTitle.value = '';
-                    taskDescription.value = '';
-                    taskDate.value = '';
-                    alert('Task added to calendar!');
-                } else {
-                    alert('Please fill in all the fields.');
-                }
-            });
-
-            // Load the Google API client library
-            gapi.load("client:auth2", initGoogleApi);
+            }
         });
+
+        // Convert assignments to FullCalendar events
+        assignments.forEach(function(assignment) {
+            const assignmentEvent = {
+                title: assignment.name,
+                description: `Points: ${assignment.points}\nSubmitted: ${assignment.submitted}`,
+                start: assignment.due, // Using the 'due' as the start date
+                color: '#FF5733', // Custom color for assignments
+                extendedProps: {
+                    score: assignment.score
+                }
+            };
+            calendar.addEvent(assignmentEvent);
+        });
+
+        calendar.render();
+
+        // Task form submission
+        taskForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const title = taskTitle.value;
+            const description = taskDescription.value;
+            const date = taskDate.value;
+
+            if (title && date) {
+                const newEvent = {
+                    title: title,
+                    start: date,
+                    description: description || '',
+                    color: '#FF5733',
+                };
+
+                calendar.addEvent(newEvent);
+                addEventToGoogleCalendar(newEvent);
+
+                taskTitle.value = '';
+                taskDescription.value = '';
+                taskDate.value = '';
+                alert('Task added to calendar!');
+            } else {
+                alert('Please fill in all the fields.');
+            }
+        });
+
+        // Load the Google API client library
+        gapi.load("client:auth2", initGoogleApi);
+    });
+</script>
     </script>
 </body>
 </html>

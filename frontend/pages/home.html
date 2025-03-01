@@ -20,7 +20,7 @@
             <a href="signin.html" class="nav-link text-gray-800 hover:text-blue-500 transition-colors">Login</a>
             <a href="signin.html" class="nav-link text-gray-800 hover:text-blue-500 transition-colors">Signin</a>
             <a href="chat.html" class="nav-link text-gray-800 hover:text-blue-500 transition-colors">Chat</a>
-            <a href="cal.html" class="nav-link text-gray-800 hover:text-blue-500 transition-colors">Calendar</a>
+            <a href="home.html" class="nav-link text-gray-800 hover:text-blue-500 transition-colors">Calendar</a>
           </div>
           <button id="menu-toggle" class="md:hidden text-gray-800 focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,6 +29,29 @@
           </button>
         </nav>
     </header>
+
+    <div class="container mx-auto my-24 p-6">
+        <div class="flex flex-col items-center space-y-4">
+            <button onclick="window.location.href='mailto:gmail.com'" class="bg-blue-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-blue-600">
+                Send to Gmail
+            </button>
+            <button onclick="window.location.href='video.html'" class="bg-green-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-green-600">
+                Connect to Canvas
+            </button>
+        </div>
+    
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold">Enter Task</h2>
+            <form id="task-form" class="space-y-4">
+                <input id="task-title" type="text" placeholder="Task Title" class="w-full p-2 border border-gray-300 rounded">
+                <textarea id="task-description" placeholder="Task Description" class="w-full p-2 border border-gray-300 rounded"></textarea>
+                <input id="task-date" type="datetime-local" class="w-full p-2 border border-gray-300 rounded">
+                <button type="submit" class="w-full p-2 bg-blue-500 text-white rounded">Add Task</button>
+            </form>
+        </div>
+    
+        <div id="calendar"></div>
+    </div>
     <div class="container mx-auto my-8 p-6">
         <!-- Task Input Form -->
         <div class="mb-6">
@@ -40,18 +63,27 @@
                 <button type="submit" class="w-full p-2 bg-blue-500 text-white rounded">Add Task</button>
             </form>
         </div>
+
         <!-- Calendar Display -->
         <div id="calendar"></div>
     </div>
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="max-w-7xl mx-auto text-center">
+          <p>&copy; 2025 Schedulo. All rights reserved.</p>
+        </div>
+      </footer>
+
     <!-- FullCalendar JS -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@5.10.1/main.global.min.js"></script>
+
     <script>
         // Google API client setup
                 console.log("Google API Initialized");
         let CLIENT_ID = 'AIzaSyDns58J-FecXztxwv-J7GG0n8MeVQecZiY'; // Your client ID
         let API_KEY = 'AIzaSyDns58J-FecXztxwv-J7GG0n8MeVQecZiY'; // Your API key
         let SCOPES = "https://www.googleapis.com/auth/calendar";
+
         function initGoogleApi() {
             gapi.client.init({
                 apiKey: API_KEY,
@@ -61,17 +93,20 @@
                 console.log("Google API Initialized");
             });
         }
+
         // Authenticate and load Google Calendar API
         function authenticate() {
             gapi.auth2.getAuthInstance().signIn().then(function () {
                 loadCalendarApi();
             });
         }
+
         function loadCalendarApi() {
             gapi.client.load("calendar", "v3", function () {
                 console.log("Google Calendar API Loaded");
             });
         }
+
         // Add Event to Google Calendar
         function addEventToGoogleCalendar(event) {
             var eventDetails = {
@@ -86,21 +121,25 @@
                     "timeZone": "America/Los_Angeles"
                 }
             };
+
             var request = gapi.client.calendar.events.insert({
                 "calendarId": "primary",
                 "resource": eventDetails
             });
+
             request.execute(function (event) {
                 console.log("Event created: ", event);
                 alert("Event successfully added to Google Calendar!");
             });
         }
+
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             const taskForm = document.getElementById('task-form');
             const taskTitle = document.getElementById('task-title');
             const taskDescription = document.getElementById('task-description');
             const taskDate = document.getElementById('task-date');
+
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 editable: true,
@@ -114,7 +153,7 @@
                     const droppedEvent = {
                         title: 'New Task',
                         start: info.dateStr,
-                        color: '#3498DB'
+                        color: '#3498db'
                     };
                     calendar.addEvent(droppedEvent);
                     addEventToGoogleCalendar(droppedEvent);
@@ -129,13 +168,17 @@
                     }
                 }
             });
+
             calendar.render();
+
             // Task form submission
             taskForm.addEventListener('submit', function(event) {
                 event.preventDefault();
+
                 const title = taskTitle.value;
                 const description = taskDescription.value;
                 const date = taskDate.value;
+
                 if (title && date) {
                     const newEvent = {
                         title: title,
@@ -143,8 +186,10 @@
                         description: description || '',
                         color: '#FF5733',
                     };
+
                     calendar.addEvent(newEvent);
                     addEventToGoogleCalendar(newEvent);
+
                     taskTitle.value = '';
                     taskDescription.value = '';
                     taskDate.value = '';
@@ -153,6 +198,7 @@
                     alert('Please fill in all the fields.');
                 }
             });
+
             // Load the Google API client library
             gapi.load("client:auth2", initGoogleApi);
         });

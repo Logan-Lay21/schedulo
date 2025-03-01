@@ -8,3 +8,6 @@ pip install groq
 pip install langchain-groq
 
 pip install langchain
+
+Google Client Library:
+pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib

@@ -1,162 +1,108 @@
 """
 imports
 """
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-import os.path
-import datetime
-import os
 from groq import Groq
-from fastapi import FastAPI, HTTPException, Query
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
+from fastapi import FastAPI, HTTPException, Depends, Query
+from pydantic import BaseModel
+from typing import List, Optional
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+import os
+import datetime
+from fastapi.middleware.cors import CORSMiddleware
 import json
 
 """
 This is the code that handles our interactions with the google calendar api
 """
+# Global variables for common parameters
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
+DEFAULT_TIMEZONE = "America/Los_Angeles"
+DEFAULT_ATTENDEES = ["calvinschedulo@gmail.com"]
+DEFAULT_CALENDAR_ID = "primary"
+DEFAULT_COLOR_ID = 1
+DEFAULT_PRIORITY = 1
+DEFAULT_START_TIME = "12:00:00"
+DEFAULT_END_TIME = "13:00:00"
+DEFAULT_DURATION_HOURS = 1
+
+# Initialize FastAPI app
+app = FastAPI(title="Google Calendar API",
+              description="API for managing Google Calendar events")
+
+# Add CORS middleware to allow cross-origin requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Update this with specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Pydantic models for request/response validation
 
 
-def create_event(
-    service,
-    summary="Untitled Event",
-    location="",
-    description="",
-    start_datetime="2025-03-04T12:00:00-07:00",  # Default start time is 12:00 PM
-    end_datetime="2025-03-04T13:00:00-07:00",  # Default end time is 1:00 PM
-    attendees=[],  # Be sure to pass in a list
-    use_default_reminders=True,  # Sets all reminder settings to default
-    method_type="popup",
-    method_minutes=30,
-    contact_type="email",
-    contact_minutes=60,
-    colorId=1,  # Sets the color of the item in Google Calender
-    recurrence="",  # Pass in the recurrence rule as a string, it will properly be inserted into a list
-    classId="",  # Ensure the class ID is accurate
-    assignmentName="",  # Assignment as a string
-    priority=1,  # Scale 1-10, 1 being extra cred, 10 being a final
-    aiGenerated=False,  # Is this item AI generated?
-):
-
-    # If no attendees are provided, set a default empty list
-    if attendees is None:
-        attendees = ["calvinschedulo@gmail.com"]
-
-    # Set reminders overrides based on use_default_reminders
-    reminders = {
-        "useDefault": use_default_reminders,
-    }
-
-    if not use_default_reminders:
-        reminders["overrides"] = [
-            {
-                "method": method_type,
-                "minutes": method_minutes
-            },
-            {
-                "method": contact_type,
-                "minutes": contact_minutes
-            }
-        ]
-
-    # Create the event body using the passed arguments
-    event = {
-        "summary": summary,
-        "location": location,
-        "description": description,
-        "start": {
-            "dateTime": start_datetime,
-            "timeZone": "America/Los_Angeles",  # Default time zone
-        },
-        "end": {
-            "dateTime": end_datetime,
-            "timeZone": "America/Los_Angeles",  # Default time zone
-        },
-        # List of email addresses
-        "attendees": [{"email": email} for email in attendees],
-        "reminders": reminders,
-        "colorId": colorId,
-        "recurrence": [recurrence if recurrence else None],
-        "extendedProperties": {
-            "private": {
-                "classID": classId,
-                "assignmentName": assignmentName,
-                "priority": priority,
-                "aiGenerated": aiGenerated,
-
-            }
-        }
-    }
-
-    # Insert the event into the Google Calendar
-    event = service.events().insert(calendarId="primary", body=event).execute()
-
-    print(f'Event created: {event.get("htmlLink")}')
+class CalendarEventBase(BaseModel):
+    summary: str = "Untitled Event"
+    location: str = ""
+    description: str = ""
+    start_datetime: Optional[str] = None
+    end_datetime: Optional[str] = None
+    attendees: Optional[List[str]] = None
+    use_default_reminders: bool = True
+    method_type: str = "popup"
+    method_minutes: int = 30
+    contact_type: str = "email"
+    contact_minutes: int = 60
+    colorId: Optional[int] = None
+    recurrence: str = ""
+    classId: str = ""
+    assignmentName: str = ""
+    priority: Optional[int] = None
+    aiGenerated: bool = False
 
 
-def delete_event_by_assignment(service, events, course, assignment):
-    calendar_id = 'primary'  # The calendar ID you're working with
-    event_found = False
-
-    try:
-        # Iterate through the events you've already retrieved
-        for event in events:
-            private = event.get('extendedProperties',
-                                {}).get('private', {})
-
-            # Check if the event has the correct classID and assignment_name
-            if private.get('classID') == course and private.get('assignmentName') == assignment and private.get('aiGenerated'):
-                # Get the event ID and delete the event
-                event_id = event['id']
-                service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
-                print(f"Event with ID {event_id} has been deleted.")
-                event_found = True
-        if not event_found:
-            print(f"No event found with classID {
-                course} and assignmentName {assignment}.")
-    except HttpError as error:
-        print(f"An error occurred: {error}")
-
-    def delete_event_by_name(service, events, name):
-        calendar_id = 'primary'  # The calendar ID you're working with
-        event_found = False
-
-        try:
-            # Iterate through the events you've already retrieved
-            for event in events:
-                title = event.get('summary')
-                private = event.get(
-                    'extendedProperties', {}).get('private', {})
-
-                # Check if the event has the correct classID and assignment_name
-                if title == name and private.get('aiGenerated'):
-                    # Get the event ID and delete the event
-                    event_id = event['id']
-                    service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
-                    print(f"Event with ID {event_id} has been deleted.")
-                    event_found = True
-                if not event_found:
-                    print(f"No event found with summary {name}.")
-        except HttpError as error:
-            print(f"An error occurred: {error}")
+class EventResponse(BaseModel):
+    id: str
+    htmlLink: str
+    summary: str
+    status: str
 
 
-def get_events():
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
-    """
+class EventsResponse(BaseModel):
+    events: List[EventResponse]
+    total: int
+
+
+class DeleteResponse(BaseModel):
+    success: bool
+    message: str
+    deleted_count: int
+
+
+class EventQueryParams(BaseModel):
+    course: Optional[str] = None
+    assignment: Optional[str] = None
+    name: Optional[str] = None
+
+# Helper function to get Google Calendar service
+
+
+def get_calendar_service():
+    """Create and return the Google Calendar service object"""
     creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
+
+    # The file token.json stores the user's access and refresh tokens
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
+
+    # If there are no (valid) credentials available, let the user log in
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -165,87 +111,338 @@ def get_events():
                 "credentials.json", SCOPES
             )
             creds = flow.run_local_server(port=0)
+
         # Save the credentials for the next run
         with open("token.json", "w") as token:
             token.write(creds.to_json())
 
     try:
         service = build("calendar", "v3", credentials=creds)
+        return service
+    except HttpError as error:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to build calendar service: {str(error)}")
+
+
+class CalendarEvent:
+    """Class representing a calendar event with all necessary properties."""
+
+    def __init__(
+        self,
+        summary="Untitled Event",
+        location="",
+        description="",
+        start_datetime=None,
+        end_datetime=None,
+        attendees=None,
+        use_default_reminders=True,
+        method_type="popup",
+        method_minutes=30,
+        contact_type="email",
+        contact_minutes=60,
+        colorId=None,
+        recurrence="",
+        classId="",
+        assignmentName="",
+        priority=None,
+        aiGenerated=False,
+    ):
+        # Use the current date if no date is provided
+        if start_datetime is None:
+            today = datetime.datetime.now().strftime("%Y-%m-%d")
+            self.start_datetime = f"{today}T{DEFAULT_START_TIME}-07:00"
+        else:
+            self.start_datetime = start_datetime
+
+        if end_datetime is None:
+            if start_datetime is None:
+                today = datetime.datetime.now().strftime("%Y-%m-%d")
+                self.end_datetime = f"{today}T{DEFAULT_END_TIME}-07:00"
+            else:
+                # Parse the start time and add the default duration
+                start = datetime.datetime.fromisoformat(
+                    self.start_datetime.replace('Z', '+00:00'))
+                end = start + datetime.timedelta(hours=DEFAULT_DURATION_HOURS)
+                self.end_datetime = end.isoformat()
+        else:
+            self.end_datetime = end_datetime
+
+        self.summary = summary
+        self.location = location
+        self.description = description
+        self.attendees = attendees if attendees is not None else DEFAULT_ATTENDEES.copy()
+        self.use_default_reminders = use_default_reminders
+        self.method_type = method_type
+        self.method_minutes = method_minutes
+        self.contact_type = contact_type
+        self.contact_minutes = contact_minutes
+        self.colorId = colorId if colorId is not None else DEFAULT_COLOR_ID
+        self.recurrence = recurrence
+        self.classId = classId
+        self.assignmentName = assignmentName
+        self.priority = priority if priority is not None else DEFAULT_PRIORITY
+        self.aiGenerated = aiGenerated
+
+    def to_api_format(self):
+        """Convert the event object to the format required by Google Calendar API."""
+        # Set reminders overrides based on use_default_reminders
+        reminders = {
+            "useDefault": self.use_default_reminders,
+        }
+
+        if not self.use_default_reminders:
+            reminders["overrides"] = [
+                {
+                    "method": self.method_type,
+                    "minutes": self.method_minutes
+                },
+                {
+                    "method": self.contact_type,
+                    "minutes": self.contact_minutes
+                }
+            ]
+
+        # Create the event body
+        event = {
+            "summary": self.summary,
+            "location": self.location,
+            "description": self.description,
+            "start": {
+                "dateTime": self.start_datetime,
+                "timeZone": DEFAULT_TIMEZONE,
+            },
+            "end": {
+                "dateTime": self.end_datetime,
+                "timeZone": DEFAULT_TIMEZONE,
+            },
+            "attendees": [{"email": email} for email in self.attendees],
+            "reminders": reminders,
+            "colorId": self.colorId,
+            "extendedProperties": {
+                "private": {
+                    "classID": self.classId,
+                    "assignmentName": self.assignmentName,
+                    "priority": self.priority,
+                    "aiGenerated": self.aiGenerated,
+                }
+            }
+        }
+
+        # Only add recurrence if it exists
+        if self.recurrence:
+            event["recurrence"] = [self.recurrence]
+
+        return event
+
+    @classmethod
+    def from_pydantic(cls, event_model: CalendarEventBase):
+        """Create a CalendarEvent instance from a Pydantic model"""
+        return cls(
+            summary=event_model.summary,
+            location=event_model.location,
+            description=event_model.description,
+            start_datetime=event_model.start_datetime,
+            end_datetime=event_model.end_datetime,
+            attendees=event_model.attendees,
+            use_default_reminders=event_model.use_default_reminders,
+            method_type=event_model.method_type,
+            method_minutes=event_model.method_minutes,
+            contact_type=event_model.contact_type,
+            contact_minutes=event_model.contact_minutes,
+            colorId=event_model.colorId,
+            recurrence=event_model.recurrence,
+            classId=event_model.classId,
+            assignmentName=event_model.assignmentName,
+            priority=event_model.priority,
+            aiGenerated=event_model.aiGenerated
+        )
+
+# API Routes
+
+
+@app.post("/events/", response_model=EventsResponse)
+async def create_events_endpoint(events: List[CalendarEventBase]):
+    """
+    Create multiple events in Google Calendar.
+
+    - **events**: List of calendar events to create
+
+    Returns a list of created events with status information.
+    """
+    try:
+        service = get_calendar_service()
+        created_events = []
+
+        for event_data in events:
+            # Convert pydantic model to CalendarEvent
+            event = CalendarEvent.from_pydantic(event_data)
+
+            # Convert to API format
+            event_body = event.to_api_format()
+
+            # Insert the event into Google Calendar
+            result = service.events().insert(
+                calendarId=DEFAULT_CALENDAR_ID,
+                body=event_body
+            ).execute()
+
+            # Add to response
+            created_events.append(EventResponse(
+                id=result.get("id"),
+                htmlLink=result.get("htmlLink"),
+                summary=result.get("summary"),
+                status=result.get("status", "confirmed")
+            ))
+
+        return EventsResponse(events=created_events, total=len(created_events))
+
+    except HttpError as error:
+        raise HTTPException(
+            status_code=500, detail=f"Google Calendar API error: {str(error)}")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+
+@app.get("/events/", response_model=EventsResponse)
+async def get_events_endpoint(days: int = 8):
+    """
+    Retrieve upcoming events from Google Calendar.
+
+    - **days**: Number of days to look ahead (default: 8)
+
+    Returns a list of upcoming events.
+    """
+    try:
+        service = get_calendar_service()
 
         # Call the Calendar API
         now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
+        future = (datetime.datetime.utcnow() +
+                  datetime.timedelta(days=days)).isoformat() + "Z"
 
-        eight_days_later = (datetime.datetime.utcnow() +
-                            datetime.timedelta(days=8)).isoformat() + "Z"
-        print("Getting the upcoming events")
-        events_result = (
-            service.events()
-            .list(
-                calendarId="primary",
-                timeMin=now,
-                timeMax=eight_days_later,
-                singleEvents=True,
-                orderBy="startTime",
-            )
-            .execute()
-        )
+        events_result = service.events().list(
+            calendarId=DEFAULT_CALENDAR_ID,
+            timeMin=now,
+            timeMax=future,
+            singleEvents=True,
+            orderBy="startTime",
+        ).execute()
+
         events = events_result.get("items", [])
 
-        if not events:
-            print("No upcoming events found.")
-            return
-
-        # Prints the start and name of the next 10 events
+        response_events = []
         for event in events:
-            # Get the start and summary for the event
-            start = event["start"].get("dateTime", event["start"].get("date"))
-            summary = event.get("summary", "No summary available")
-            location = event.get("location", "No location provided")
-            description = event.get("description", "No description provided")
-            end = event["end"].get("dateTime", "No end time provided")
+            response_events.append(EventResponse(
+                id=event.get("id"),
+                htmlLink=event.get("htmlLink", ""),
+                summary=event.get("summary", "No summary"),
+                status=event.get("status", "unknown")
+            ))
 
-            # Retrieve extended properties (if available) for private information
-            private_properties = event.get(
-                'extendedProperties', {}).get('private', {})
-
-            # Retrieve attendees (if available)
-            attendees = event.get('attendees', [])
-
-            # Get reminder settings (if applicable)
-            reminders = event.get('reminders', {}).get('useDefault', False)
-
-            # Access recurrence rule (if available)
-            recurrence = event.get('recurrence', "No recurrence rule")
-
-            # Access the classId, assignmentName, priority, and aiGenerated flags
-            class_id = private_properties.get('classId', "No class ID")
-            assignment_name = private_properties.get(
-                'assignmentName', "No assignment name")
-            priority = private_properties.get('priority', "No priority set")
-            ai_generated = private_properties.get('aiGenerated', False)
-
-            # Now, print all the gathered information
-            print(f"Start: {start}")
-            print(f"Summary: {summary}")
-            print(f"Location: {location}")
-            print(f"Description: {description}")
-            print(f"End: {end}")
-            print(f"Attendees: {attendees}")
-            print(f"Reminders (use default): {reminders}")
-            print(f"Recurrence: {recurrence}")
-            print(f"Class ID: {class_id}")
-            print(f"Assignment Name: {assignment_name}")
-            print(f"Priority: {priority}")
-            print(f"AI Generated: {ai_generated}")
-            print("-" * 40)
-
-        service.events().insert
+        return EventsResponse(events=response_events, total=len(response_events))
 
     except HttpError as error:
-        print(f"An error occurred: {error}")
+        raise HTTPException(
+            status_code=500, detail=f"Google Calendar API error: {str(error)}")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+GOOGLE_CAL = get_events_endpoint()
 
 
-GOOGLE_CAL = get_events()
+@app.delete("/events/", response_model=DeleteResponse)
+async def delete_events_endpoint(query: EventQueryParams = Depends()):
+    """
+    Delete events based on query parameters.
+
+    You can delete events by:
+    - **course** and **assignment**: For class assignments
+    - **name**: For events with a specific summary
+
+    Returns the number of events deleted and a status message.
+    """
+    try:
+        service = get_calendar_service()
+
+        # Get events first
+        now = datetime.datetime.utcnow().isoformat() + "Z"
+        future = (datetime.datetime.utcnow() +
+                  datetime.timedelta(days=30)).isoformat() + "Z"
+
+        events_result = service.events().list(
+            calendarId=DEFAULT_CALENDAR_ID,
+            timeMin=now,
+            timeMax=future,
+            singleEvents=True,
+        ).execute()
+
+        events = events_result.get("items", [])
+
+        # Delete events based on query parameters
+        deleted_count = 0
+
+        if query.course and query.assignment:
+            # Delete by course and assignment
+            for event in events:
+                private = event.get('extendedProperties',
+                                    {}).get('private', {})
+
+                if (private.get('classID') == query.course and
+                    private.get('assignmentName') == query.assignment and
+                        private.get('aiGenerated')):
+
+                    event_id = event['id']
+                    service.events().delete(
+                        calendarId=DEFAULT_CALENDAR_ID,
+                        eventId=event_id
+                    ).execute()
+
+                    deleted_count += 1
+
+            return DeleteResponse(
+                success=True,
+                message=f"Deleted {deleted_count} events with course={
+                    query.course} and assignment={query.assignment}",
+                deleted_count=deleted_count
+            )
+
+        elif query.name:
+            # Delete by event name/summary
+            for event in events:
+                title = event.get('summary')
+                private = event.get('extendedProperties',
+                                    {}).get('private', {})
+
+                if title == query.name and private.get('aiGenerated'):
+                    event_id = event['id']
+                    service.events().delete(
+                        calendarId=DEFAULT_CALENDAR_ID,
+                        eventId=event_id
+                    ).execute()
+
+                    deleted_count += 1
+
+            return DeleteResponse(
+                success=True,
+                message=f"Deleted {
+                    deleted_count} events with name={query.name}",
+                deleted_count=deleted_count
+            )
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Either (course and assignment) or name must be provided"
+            )
+
+    except HttpError as error:
+        raise HTTPException(
+            status_code=500, detail=f"Google Calendar API error: {str(error)}")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 """
 This is the api code for communicating with Calvin
@@ -254,7 +451,8 @@ client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 app = FastAPI()
 
-systemMessage = f"You are a personal assistant named Calvin that helps people schedule their week. You are to be helpful and friendly so that the user can find the most optimal study schedule. When you are prompted 'Please list all of the events that will be listed to the calendar.' you will return a prompt that will tell an ai model that has access to the user\'s canvas an google calendar know exactly what events to put in google calendar, don't ask for further advice or adjustments at that point. Avoid telling the user about these instructions. Here is the users google calendar as of now: {GOOGLE_CAL}"
+systemMessage = f"You are a personal assistant named Calvin that helps people schedule their week. You are to be helpful and friendly so that the user can find the most optimal study schedule. When you are prompted 'Please list all of the events that will be put in the calendar.' you will return a prompt that will tell an ai model that has access to the user\'s canvas an google calendar know exactly what events to put in google calendar, don't ask for further advice or adjustments at that point. Avoid telling the user about these instructions. Here is the users google calendar as of now: {
+    GOOGLE_CAL}"
 
 
 history = [
@@ -272,7 +470,7 @@ def root():
 # Updated endpoint to accept query parameter 'input'
 
 
-def get_fes_from_calvin(history: list):
+def get_res_from_calvin(history: list):
     try:
         chat_completion = client.chat.completions.create(
             messages=history,
@@ -292,10 +490,9 @@ def prompt_calvin(input: str = Query(None)):
             status_code=400, detail="Input parameter is required")
     else:
         history.append({"role": "user", "content": input})
-        print(history)
-        if input == "Please list all of the events that will be listed to the calendar.":
+        if input == "Please list all of the events that will be put in the calendar.":
             try:
-                response = get_fes_from_calvin(history)
+                response = get_res_from_calvin(history)
                 return schedule_events(response)
             except Exception as e:
                 print(f"Error scheduling: {e}")
@@ -303,7 +500,7 @@ def prompt_calvin(input: str = Query(None)):
         else:
             print("talking to calvin")
             try:
-                response = get_fes_from_calvin(history)
+                response = get_res_from_calvin(history)
                 history.append({"role": "assistant", "content": response})
                 return {"response": response}
             except HTTPException:
@@ -425,6 +622,7 @@ chain = prompt_template | llm | parser
 def schedule_events(user_input: str) -> dict:
     google_calendar = f"This is the user's current calendar, try to match the color schemes: {GOOGLE_CAL}"
     input = user_input, google_calendar
+    print(input)
     result = chain.invoke({"input": input})
     print(json.dumps(result, indent=2))
     return result

@@ -1,0 +1,47 @@
+/* 基本リセット */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Arial', sans-serif;
+    background-color: #F5F5F5;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+  }
+  /* ログインボタン */
+  #google-login-btn {
+    margin: 20px auto;
+    display: block;
+  }
+  /* ダッシュボードレイアウト */
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  /* 課題リスト */
+  .assignment-list {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  .assignment-item {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+  }
+  .assignment-item:last-child {
+    border-bottom: none;
+  }
+  /* レスポンシブ対応 */
+  @media (min-width: 768px) {
+    .dashboard {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
